@@ -1,0 +1,8 @@
+prefix=/home/a1an/catkin_ws/devel
+
+Name: assignment1c_turtlebot3
+Description: Description of assignment1c_turtlebot3
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

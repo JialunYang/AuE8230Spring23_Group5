@@ -1,0 +1,11 @@
+<launch>
+  <!-- Launch the turtlebot3_gazebo simulation -->
+  <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_empty_world.launch">
+  <arg name="model" value="burger"/>
+  </include>
+
+  <!-- Launch the desired node -->
+  <node pkg ="assignment1c_turtlebot3" type = "circle.py" name = "circle" output = "screen" if = "$(eval arg('code') == 'circle')" />
+  <node pkg ="assignment1c_turtlebot3" type = "square_openloop.py" name = "square_openloop" output = "screen" if = "$(eval arg('code') == 'square')" />
+   <node pkg ="assignment1c_turtlebot3" type = "new_square.py" name = "new_square" output = "screen" if = "$(eval arg('code') == 'newsquare')" />
+</launch>
