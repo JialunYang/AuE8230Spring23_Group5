@@ -1,0 +1,7 @@
+<launch>
+
+  <!-- Launch the desired node -->
+  <node pkg ="assignment2B_turtlebot3" type = "circle.py" name = "circle" output = "screen" if = "$(eval arg('code') == 'circle')" />
+  <node pkg ="assignment2B_turtlebot3" type = "square_openloop.py" name = "square_openloop" output = "screen" if = "$(eval arg('code') == 'square')" />
+   <node pkg ="assignment2B_turtlebot3" type = "new_square.py" name = "new_square" output = "screen" if = "$(eval arg('code') == 'newsquare')" />
+</launch>
