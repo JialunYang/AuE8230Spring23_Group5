@@ -1,0 +1,7 @@
+Question[[:space:]]1_Teleop.mov filter=lfs diff=lfs merge=lfs -text
+Circle_fast.mov filter=lfs diff=lfs merge=lfs -text
+Circle_medium.mov filter=lfs diff=lfs merge=lfs -text
+Circle_slow.mov filter=lfs diff=lfs merge=lfs -text
+Square_medium.mov filter=lfs diff=lfs merge=lfs -text
+Square_slow.mov filter=lfs diff=lfs merge=lfs -text
+Square_high.mov filter=lfs diff=lfs merge=lfs -text
