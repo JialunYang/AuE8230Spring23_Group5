@@ -1,3 +1,7 @@
+$ roslaunch assignment2B_turtlebot3 move.launch code:=circle 
+$ roslaunch assignment2B_turtlebot3 move.launch code:=square
+These commands are used to launch the circle.py and square.py for our assignment.
+
 Introduction:
 The turtle bot is programmed to move and spin at various rates to move in square and circle. Here, we have made various observation on the trajectory it followed, movement of the turtle Bot before calibrating it. 
 The lower medium and high speeds were taken as 0., 1.5, 1.8 for circle and  0.2, 0.3, and 0.4 for square respectively to get the results.
