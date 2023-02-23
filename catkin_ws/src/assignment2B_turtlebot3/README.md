@@ -22,9 +22,9 @@ A square of 1 m is measured on the ground and the turtle bot is placed to estima
 Results:
 
 Circle:
-The turtle bot turned well and without problem at low speeds. As we increased the rotational speed to medium, we saw jerks and abrupt shifts in direction.
+The turtle bot turned well and without problem at low speeds. As we increased the rotational speed to medium, we saw jerks and abrupt shifts in direction. Also the bot cannot go well when the speed of z is lower than 0.2, no matter what the direct speed is. So it has a minimum vertical speed.
 Square:
-The speed at which the turtlebot moves affects its ability to maintain a consistent trajectory. The slow speed was the most accurate, while the fast speed was the least accurate due to its high angular speed. It is also important to note that the surface on which the turtlebot travels can also impact its trajectory.  This emphasizes the importance of testing in real-world environments to obtain accurate results.
+The speed at which the turtlebot moves affects its ability to maintain a consistent trajectory. The slow speed was the most accurate, while the fast speed was the least accurate due to its high angular speed. It is also important to note that the surface on which the turtlebot travels can also impact its trajectory.  This emphasizes the importance of testing in real-world environments to obtain accurate results. Also for running in 1 meter, different speed need different "distance" parameters in the code. To be specific, the higher the speed is, the higher the distance need to be for the bot to run in 1 meter.
 
 
 Circle radius in m - Deviation 
