@@ -11,7 +11,7 @@ class WallFollower:
         self.pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
         self.sub = rospy.Subscriber("/scan", LaserScan, self.wallfollow)
     
-    def PID(self, error, Kp=0.69):
+    def PID(self, error, Kp=1):
       
         return Kp * error 
     
@@ -23,6 +23,8 @@ class WallFollower:
         left = sum(scan[16:90])/74 
         
         linear_vel = 0.45
+        #linear_vel = 0.6
+        #linear_vel = 0.8
         angular_vel = 0
         
         error = left - right
