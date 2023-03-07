@@ -12,6 +12,8 @@ The robot moves in the direction with the greatest mean range value (i.e., the s
 Run the following command in a simulation environment to launch the wall following behavior: 
 
     $ roslaunch assignment3a_wallfollowingandobstacleavoidance wall_follower.launch
+    
+This launch file make use of another launch file named turtlebot3_wallfollowing.launch to open gazebo and the wallfollowing world with a turtlebot burger in it, and then run the wall_follower python file.
 
 Part 2: Obstacle Avoidance
 
@@ -28,6 +30,8 @@ Run the following command in a simulation environment to launch the obstacle avo
 
     $ roslaunch assignment3a_wallfollowingandobstacleavoidance wander.launch
 
+This launch file make use of another launch file named turtlebot3_obstacles.launch to open gazebo and the obstacles world with a turtlebot burger in it, and then run the wander python file.
+
 Part 3: Obstacle Avoidance in Real world
 
 
@@ -37,7 +41,7 @@ To start the Turtlebot3 driver, you must also connect to the robot via SSH and r
 
     $ roslaunch assignment3a_wallfollowingandobstacleavoidance obstacles_real.launch
 
-The obstacle avoidance can then be launched.
+The obstacle avoidance can then be launched. This launch file only simply open the obstacle_avoidance python file.
 When you run the file, the robot will move around and avoid obstacles. 
 
 
@@ -51,3 +55,5 @@ If the distance exceeds or equals the threshold value, the robot travels at a sl
 Run the following command in a simulation environment to launch the Emergency Braking:
 
     $ roslaunch assignment3a_wallfollowingandobstacleavoidance emergency_braking.launch
+    
+This launch file make use of another launch file named turtlebot3_wall.launch to open gazebo and the wall world we created with a turtlebot burger in it, and then run the emergency_braking python file.
