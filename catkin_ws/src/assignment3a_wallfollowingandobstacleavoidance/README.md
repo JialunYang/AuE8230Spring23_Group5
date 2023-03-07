@@ -19,11 +19,8 @@ Using laser scanner data, this software is meant to make a robot follow a wall.
 The robot advances until it discovers a wall, at which point it follows it while keeping a specified distance from it.
     • The variable thresh, which is initially set at 0.25, determines the minimum distance. 
     • If there is no wall in sight, the robot goes forward with a linear velocity of 0.4 and an angular velocity of 0.
-
     • If the robot detects a wall to its right, it rotates left with an angular velocity of 1.0 to follow it.
-
     • If the robot detects a wall to its left, it rotates right with an angular velocity of -1.0 to follow it.
-
     • If there is a wall ahead, the robot will stop traveling and turn until there is no wall to the right or left, at which point it will proceed forward with a linear velocity of 0.4 and an angular velocity of 0.0. 
 
 Run the following command in a simulation environment to launch the obstacle avoidance behavior: 
