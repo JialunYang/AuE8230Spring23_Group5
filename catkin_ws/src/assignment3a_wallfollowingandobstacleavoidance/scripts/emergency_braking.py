@@ -26,3 +26,6 @@ move = Twist()
 
 rospy.spin()
 
+if __name__ == '__main__':
+    eb = scan_callback()
+    eb.run()
