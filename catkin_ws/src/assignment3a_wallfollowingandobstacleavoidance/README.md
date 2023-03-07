@@ -11,7 +11,7 @@ The robot moves in the direction with the greatest mean range value (i.e., the s
 
 Run the following command in a simulation environment to launch the wall following behavior: 
 
-    • $ roslaunch assignment3a_wallfollowingandobstacleavoidance wall_follower.launch
+    $ roslaunch assignment3a_wallfollowingandobstacleavoidance wall_follower.launch
 
 Part 2: Obstacle Avoidance
 
@@ -26,7 +26,7 @@ The robot advances until it discovers a wall, at which point it follows it while
 
 Run the following command in a simulation environment to launch the obstacle avoidance behavior: 
 
-    • $ roslaunch assignment3a_wallfollowingandobstacleavoidance wander.launch
+    $ roslaunch assignment3a_wallfollowingandobstacleavoidance wander.launch
 
 Part 3: Obstacle Avoidance in Real world
 
@@ -35,7 +35,7 @@ Obstacle avoidance can also be run on a physical Turtlebot3 robot using the obst
 To accomplish this, modify the obstacle_real.launch file to use a real robot rather than a simulated one.
 To start the Turtlebot3 driver, you must also connect to the robot via SSH and run the following command: 
 
-    • $ roslaunch assignment3a_wallfollowingandobstacleavoidance obstacles_real.launch
+    $ roslaunch assignment3a_wallfollowingandobstacleavoidance obstacles_real.launch
 
 The obstacle avoidance can then be launched.
 When you run the file, the robot will move around and avoid obstacles. 
@@ -50,4 +50,4 @@ If the distance exceeds or equals the threshold value, the robot travels at a sl
 
 Run the following command in a simulation environment to launch the Emergency Braking:
 
-    • $ roslaunch assignment3a_wallfollowingandobstacleavoidance emergency_braking.launch
+    $ roslaunch assignment3a_wallfollowingandobstacleavoidance emergency_braking.launch
