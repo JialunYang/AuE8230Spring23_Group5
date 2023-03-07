@@ -1,0 +1,9 @@
+<launch>
+  <!-- Launch gazebo -->
+  <include file="$(find assignment3a_wallfollowingandobstacleavoidance)/launch/turtlebot3_wall.launch">
+  <arg name="model" value="burger"/>
+  </include>
+
+  <!-- Launch the desired node -->
+  <node pkg ="assignment3a_wallfollowingandobstacleavoidance" type = "emergency_braking.py" name = "emergency_braking" output = "screen"/>
+</launch>

@@ -23,7 +23,7 @@ class WallFollowing:
             data.ranges[340] > self.thresh and 
             data.ranges[0] > self.thresh):
             self.move.linear.x = 0.5
-            self.move.angular.z = 0
+            self.move.angular.z = 0.0
         elif (data.ranges[20] > self.thresh and 
               data.ranges[55] > self.thresh and 
               data.ranges[90] > self.thresh):
@@ -45,7 +45,7 @@ class WallFollowing:
                 self.move.linear.x = 0.5
                 self.move.angular.z = 0.0
         else:
-            self.move.linear.x = 0
+            self.move.linear.x = 0.0
             self.move.angular.z = 0.5
 
         self.pub.publish(self.move)

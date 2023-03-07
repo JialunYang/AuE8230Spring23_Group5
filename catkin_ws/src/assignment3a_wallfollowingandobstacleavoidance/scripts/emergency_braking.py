@@ -5,7 +5,9 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
 
 def scan_callback(data):
-    scan_value = data.ranges[len(data.ranges)//2] # get the center-most value of the scan data array
+    # scan_value = data.ranges[len(data.ranges)//2] # get the center-most value of the scan data array
+    scan_value = data.ranges[0]
+    print('Range at 0 degress: {}'.format(data.ranges[0]))
     threshold = 0.5 # The distance threshold for emergency braking
 
     if scan_value < threshold:
