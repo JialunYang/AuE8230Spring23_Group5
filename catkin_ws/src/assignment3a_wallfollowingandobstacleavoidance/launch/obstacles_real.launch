@@ -1,0 +1,5 @@
+<launch>
+
+  <!-- Launch the desired node -->
+  <node pkg ="assignment3a_wallfollowingandobstacleavoidance" type = "obstacle_avoidance.py" name = "obstacle_avoidance" output = "screen" />
+</launch>
