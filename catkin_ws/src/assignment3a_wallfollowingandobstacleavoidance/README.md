@@ -10,7 +10,8 @@ We used A PID Controller is used to control the motion of the robot by taking /s
 The robot moves in the direction with the greatest mean range value (i.e., the sector with the most open space).
 
 Run the following command in a simulation environment to launch the wall following behavior: 
-  $ roslaunch assignment3a_wallfollowingandobstacleavoidance wall_follower.launch
+
+    • $ roslaunch assignment3a_wallfollowingandobstacleavoidance wall_follower.launch
 
 Part 2: Obstacle Avoidance
 
@@ -24,7 +25,8 @@ The robot advances until it discovers a wall, at which point it follows it while
     • If there is a wall ahead, the robot will stop traveling and turn until there is no wall to the right or left, at which point it will proceed forward with a linear velocity of 0.4 and an angular velocity of 0.0. 
 
 Run the following command in a simulation environment to launch the obstacle avoidance behavior: 
-  $ roslaunch assignment3a_wallfollowingandobstacleavoidance wander.launch
+
+    • $ roslaunch assignment3a_wallfollowingandobstacleavoidance wander.launch
 
 Part 3: Obstacle Avoidance in Real world
 
@@ -32,7 +34,8 @@ Part 3: Obstacle Avoidance in Real world
 Obstacle avoidance can also be run on a physical Turtlebot3 robot using the obstacle avoidance package.
 To accomplish this, modify the obstacle_real.launch file to use a real robot rather than a simulated one.
 To start the Turtlebot3 driver, you must also connect to the robot via SSH and run the following command: 
-roslaunch assignment3a_wallfollowingandobstacleavoidance obstacles_real.launch
+
+    • $ roslaunch assignment3a_wallfollowingandobstacleavoidance obstacles_real.launch
 
 The obstacle avoidance can then be launched.
 When you run the file, the robot will move around and avoid obstacles. 
@@ -45,5 +48,6 @@ The script calculates the robot's distance from the nearest obstacle using the s
 If the distance is less than 0.5 meters, the robot will cease moving by posting 0 to the '/cmd vel' topic.
 If the distance exceeds or equals the threshold value, the robot travels at a slow rate of 0.2 m/s by posting to the '/cmd vel' topic. 
 
-Run the following command in a simulation environment to launch the Emergency Braking: 
-$ roslaunch assignment3a_wallfollowingandobstacleavoidance emergency_braking.launch
+Run the following command in a simulation environment to launch the Emergency Braking:
+
+    • $ roslaunch assignment3a_wallfollowingandobstacleavoidance emergency_braking.launch
