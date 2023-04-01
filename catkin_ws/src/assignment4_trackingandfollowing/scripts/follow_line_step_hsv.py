@@ -6,6 +6,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
 from move_robot import MoveTurtlebot3
+from PID import PID
 
 class LineFollower(object):
 
@@ -13,14 +14,20 @@ class LineFollower(object):
         self.bridge_object = CvBridge()
         self.image_sub = rospy.Subscriber("/camera/rgb/image_raw",Image,self.camera_callback)
         self.moveTurtlebot3_object = MoveTurtlebot3()
+        self.twist_object = Twist()
+        self.height = 0
+        self.width = 0
+        self.find_traj = False
+        self.pid_controller = PID(P = 0.001, I = 0.000, D = 0.001)
+        self.pid_controller.clear()
 
     def camera_callback(self, data):
         # We select bgr8 because its the OpneCV encoding by default
         cv_image = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
 
         # We get image dimensions and crop the parts of the image we dont need
-        height, width, channels = cv_image.shape
-        crop_img = cv_image[int((height/2)+100):int((height/2)+120)][1:int(width)]
+        self.height, self.width, channels = cv_image.shape
+        crop_img = cv_image[int((self.height/2)+100):int((self.height/2)+120)][1:int(self.width)]
         #crop_img = cv_image[340:360][1:640]
 
         # Convert from RGB to HSV
@@ -42,8 +49,10 @@ class LineFollower(object):
 
         try:
             cx, cy = m['m10']/m['m00'], m['m01']/m['m00']
+            self.find_traj = True
         except ZeroDivisionError:
-            cx, cy = height/2, width/2
+            cx, cy = self.height/2, self.width/2
+            self.find_traj = False
         
         # Draw the centroid in the resultut image
         # cv2.circle(img, center, radius, color[, thickness[, lineType[, shift]]]) 
@@ -55,16 +64,19 @@ class LineFollower(object):
         #################################
         ###   ENTER CONTROLLER HERE   ###
         #################################
-        err = cx - width/2
-        
-        twist_object = Twist()
-        twist.linear.x = 0.3
-        twist.angular.z = -float(err) / 100
-        
+        self.follow_trajectory(cx, cy)
 
-        rospy.loginfo("ANGULAR VALUE SENT===>"+str(twist_object.angular.z))
+        rospy.loginfo("ANGULAR VALUE SENT===>"+str(self.twist_object.angular.z))
         # Make it start turning
-        self.moveTurtlebot3_object.move_robot(twist_object)
+        self.moveTurtlebot3_object.move_robot(self.twist_object)
+
+    def follow_trajectory(self, cx, cy):
+        self.twist_object.linear.x = 0.2
+        if self.find_traj == True:
+            err = -1* (self.width/2 - cx)
+            self.pid_controller.update(err)
+            self.twist_object.linear.x = 0.2
+            self.twist_object.angular.z = self.pid_controller.output
 
     def clean_up(self):
         self.moveTurtlebot3_object.clean_class()
