@@ -12,7 +12,7 @@ roslaunch assignment4 follow_line_hsv2.launch
 
 Run the following command in a simulation environment to launch the line following(Real-World) behavior.  
 
-rosrun assignment4_trackingandfollowing follow_line_step_hsv_real.py
+    $ rosrun assignment4_trackingandfollowing follow_line_step_hsv_real.py
 
 Troubleshooting(Real-world):
 
