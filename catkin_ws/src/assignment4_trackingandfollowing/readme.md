@@ -9,11 +9,11 @@ A Python script for line following on a Turtlebot3 robot using ROS is available 
 
  Run the following command in a simulation environment to launch the line following (Gazebo) behavior.
 
-    $ roslaunch assignment4 follow_line_hsv2.launch
+    $ roslaunch assignment4_trackingandfollowing turtlebot3_follow_line.launch
 
 Run the following command in a simulation environment to launch the line following(Real-World) behavior.  
 
-    $ rosrun assignment4_trackingandfollowing follow_line_step_hsv_real.py
+    $ roslaunch assignment4_trackingandfollowing turtlebot3_follow_line_real.launch
 
 Troubleshooting(Real-world):
 
@@ -29,5 +29,5 @@ The code establishes a publisher for the Twist messages and a subscriber for the
 
 Run the following command in a simulation environment to launch the line following(April tag tracking) behaviour.  
 
-    $ rosrun assignment4_trackingandfollowing apriltagfollowing.py
+    $ roslaunch assignment4_trackingandfollowing turtlebot3_apirltag_follow.launch
 
