@@ -6,9 +6,10 @@ For the purpose of implementing line-following behavior on a Turtlebot3 robot us
 Part1: Line following (Gazebo and Real-world)
 
 A Python script for line following on a Turtlebot3 robot using ROS is available in this repository. The line following.py script tracks a yellow line with OpenCV and determines its centroid. The script crops the picture to focus on the region where the line is anticipated to be by subscribing to the image subject from the camera. The script then uses a color threshold to isolate the yellow color in the picture, and after that, it uses image moments to determine the centroid of the resulting binary image. Based on the inaccuracy between the centroid of the line and the image center, a PID controller determines the robot's rotational velocity. The robot spins according to the output of the PID controller and advances at a constant linear speed.
+
  Run the following command in a simulation environment to launch the line following (Gazebo) behavior.
 
-roslaunch assignment4 follow_line_hsv2.launch
+    $ roslaunch assignment4 follow_line_hsv2.launch
 
 Run the following command in a simulation environment to launch the line following(Real-World) behavior.  
 
@@ -28,5 +29,5 @@ The code establishes a publisher for the Twist messages and a subscriber for the
 
 Run the following command in a simulation environment to launch the line following(April tag tracking) behaviour.  
 
-rosrun assignment4_trackingandfollowing apriltagfollowing.py
+    $ rosrun assignment4_trackingandfollowing apriltagfollowing.py
 
