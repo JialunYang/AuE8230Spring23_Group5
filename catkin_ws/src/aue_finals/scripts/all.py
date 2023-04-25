@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from pynput import keyboard
-# from apriltag_ros.msg import AprilTagDetectionArray
+from apriltag_ros.msg import AprilTagDetectionArray
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import rospy
@@ -12,7 +12,6 @@ from sensor_msgs.msg import Image, CompressedImage
 from darknet_ros_msgs.msg import BoundingBoxes
 import math
 import numpy as np
-from move_robot import MoveTurtlebot3
 
 
 def PID(error, Kp=0.1):
@@ -27,11 +26,11 @@ def on_release(key):
     # key is pynput.keyboard.KeyCode for letters and numbers
     # INITIAL STATE IS 0!
 
-    # to tell Python we are editing a global var inside a function need to write "global subscriber"
+    # to tell Python we are editing a global var inside a function, need to write "global subscriber"
     global subscriber  # only need this ONCE
     global subscriber2  # need two because line following and stop sign task needs to subscribe to two topics
 
-    # initial state, don't move
+    # initial state doesn't move
     if key.char == "0":
         state = 0
         print("State " + str(state) + " activated")
@@ -96,7 +95,7 @@ def on_release(key):
 
         # line_follower_object = LineFollower() #creates a cv bridge
         subscriber = rospy.Subscriber("/camera/rgb/image_raw", Image, camera_callback, queue_size=1)
-        subscriber2 = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.yolo_callback)
+        subscriber2 = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, yolo_callback)
 
     # State 3 = April Tag
     elif key.char == "3":
@@ -121,11 +120,12 @@ def on_release(key):
         subscriber2 = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, empty_callback)
 
 
-def empty_callback(msg):
+def empty_callback(data):
     pass
 
 
-def wallFollow_Callback(msg):
+def wallFollow_Callback(data):
+    global switch
     print("entered wallFollow callback")
     if not self.switch:
         print('mode 1')
@@ -166,10 +166,9 @@ def wallFollow_Callback(msg):
         return
 
 
-# LINE FOLLOW AND STOP SIGN CODE
 def camera_callback(data):
     # We select bgr8 because it's the OpneCV encoding by default
-    cv_image = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
+    cv_image = bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
 
     # We get image dimensions and crop the parts of the image we don't need
     height, width, channels = cv_image.shape
@@ -198,7 +197,7 @@ def camera_callback(data):
         cx, cy = height / 2, width / 2
         find_traj = False
 
-    # Draw the centroid in the resultut image
+    # Draw the centroid in the result image
     # cv2.circle(img, center, radius, color[, thickness[, lineType[, shift]]])
     # cv2.circle(mask, (int(cx), int(cy)), 10, (0, 0, 255), -1)
     # cv2.imshow("Original", cv_image)
@@ -239,10 +238,36 @@ def yolo_callback(msg):
     #             moveTurtlebot3_object.cmd_vel_subs = rospy.Subscriber('/cmd_vel', Twist, self.moveTurtlebot3_object.cmdvel_callback)
     pass
 
-def tag_callback(msg):
-    pass
 
-rospy.init_node('turtlesim_controller', anonymous=True)
+def tag_callback(data):
+    tag = data.detections[0]
+    tag_id = tag.id[0]
+    x = tag.pose.pose.pose.position.x
+    z = tag.pose.pose.pose.position.z
+    y = tag.pose.pose.pose.position.y
+
+    # Print the tag information
+    rospy.loginfo('Detected tag %d at position (%.2f, %.2f, %.2f)' % (tag_id, x, y, z))
+
+    kx = 0.2
+    kz = -2
+    while not rospy.is_shutdown():
+        # Control and publish the velocity
+        if z >= 0.4:
+            vel.linear.x = z * kx
+            vel.angular.z = x * kz
+        elif z <= 0.3:
+            vel.linear.x = -z * kx
+            vel.angular.z = -x * kz
+        else:
+            vel.linear.x = 0
+            vel.angular.z = 0
+
+        publisher.publish(vel)
+        rate.sleep()
+
+
+rospy.init_node('turtlebot_controller', anonymous=True)
 
 # global variables (need to be used in multiple functions)
 state = 0
@@ -260,6 +285,7 @@ detectedStopSign = False
 switch = False
 
 x = 0
+y = 0
 z = 0
 
 if __name__ == '__main__':
