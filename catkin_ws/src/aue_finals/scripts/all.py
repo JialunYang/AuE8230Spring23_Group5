@@ -12,12 +12,16 @@ from sensor_msgs.msg import Image, CompressedImage
 from darknet_ros_msgs.msg import BoundingBoxes
 import math
 import numpy as np
+from move_robot import MoveTurtlebot3
+
 
 def PID(error, Kp=0.1):
     return Kp * error
 
+
 def on_press(key):
     pass
+
 
 def on_release(key):
     # key is pynput.keyboard.KeyCode for letters and numbers
@@ -94,12 +98,31 @@ def on_release(key):
         subscriber = rospy.Subscriber("/camera/rgb/image_raw", Image, camera_callback, queue_size=1)
         subscriber2 = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.yolo_callback)
 
+    # State 3 = April Tag
+    elif key.char == "3":
+        state = 3
+        print("State " + str(state) + " activated")
+
+        subscriber.unregister()
+        subscriber2.unregister()
+        cv2.destroyAllWindows()
+
+        vel.linear.x = 0
+        vel.linear.y = 0
+        vel.linear.z = 0
+        vel.angular.x = 0
+        vel.angular.y = 0
+        vel.angular.z = 0
+
+        publisher.publish(vel)
+        rate.sleep()
+
+        subscriber = rospy.Subscriber('/tag_detections', AprilTagDetectionArray, tag_update)
+        subscriber2 = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, empty_callback)
+
 
 def empty_callback(msg):
     pass
-
-
-switch = False
 
 
 def wallFollow_Callback(msg):
@@ -144,11 +167,11 @@ def wallFollow_Callback(msg):
 
 
 # LINE FOLLOW AND STOP SIGN CODE
-def camera_callback(self, data):
-    # We select bgr8 because its the OpneCV encoding by default
+def camera_callback(data):
+    # We select bgr8 because it's the OpneCV encoding by default
     cv_image = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
 
-    # We get image dimensions and crop the parts of the image we dont need
+    # We get image dimensions and crop the parts of the image we don't need
     height, width, channels = cv_image.shape
     crop_img = cv_image[int(height - 20):int(height)][1:int(width)]
 
@@ -186,34 +209,38 @@ def camera_callback(self, data):
     ###   ENTER CONTROLLER HERE   ###
     #################################
     if find_traj:
-        # print('find traj')
-        kp = 0.4
-        self.twist_object.linear.x = 0.15
-        self.twist_object.angular.z = -kp * ((cx - width / 2) / (width / 2))
+        error = -((cx - width / 2) / (width / 2))
+        vel.linear.x = 0.15
+        vel.angular.z = PID(error, 0.4)
     else:
-        self.twist_object.linear.x = 0.1
-        self.twist_object.angular.z = 0.0
+        vel.linear.x = 0.1
+        vel.angular.z = 0.0
 
     rospy.loginfo("ANGULAR VALUE SENT===>" + str(self.twist_object.angular.z))
     # Make it start turning
-    self.moveTurtlebot3_object.move_robot(self.twist_object)
+    # publisher.publish(vel)
+    moveTurtlebot3_object.move_robot(vel)
+    rate.sleep()
 
 
-def yolo_callback(self, msg):
-    if not self.detectedStopSign:
-        for i in msg.bounding_boxes:
-            if i.Class == "stop sign":
-                rospy.loginfo('Stop sign detected! Stop for 3 seconds.')
-                self.detectedStopSign = True
-                self.twist_object.angular.z = 0
-                self.twist_object.linear.x = 0
-                self.moveTurtlebot3_object.cmd_vel_subs.unregister()
-                rospy.sleep(3.)
-                self.twist_object.linear.x = 0
-                self.twist_object.angular.z = -0.5
-                self.moveTurtlebot3_object.cmd_vel_subs = rospy.Subscriber(
-                    '/cmd_vel', Twist, self.moveTurtlebot3_object.cmdvel_callback)
+def yolo_callback(msg):
+    # global detectedStopSign
+    # if not detectedStopSign:
+    #     for i in msg.bounding_boxes:
+    #         if i.Class == "stop sign":
+    #             rospy.loginfo('Stop sign detected! Stop for 3 seconds.')
+    #             detectedStopSign = True
+    #             vel.angular.z = 0
+    #             vel.linear.x = 0
+    #             moveTurtlebot3_object.cmd_vel_subs.unregister()
+    #             rospy.sleep(3.)
+    #             vel.linear.x = 0
+    #             vel.angular.z = -0.5
+    #             moveTurtlebot3_object.cmd_vel_subs = rospy.Subscriber('/cmd_vel', Twist, self.moveTurtlebot3_object.cmdvel_callback)
+    pass
 
+def tag_callback(msg):
+    pass
 
 rospy.init_node('turtlesim_controller', anonymous=True)
 
@@ -223,19 +250,21 @@ state = 0
 publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)  # all states will use this so put it here for all to use
 vel = Twist()  # initialize vel as a Twist message
 rate = rospy.Rate(40)
+moveTurtlebot3_object = MoveTurtlebot3()
 
 subscriber = rospy.Subscriber("/scan", LaserScan, empty_callback)
 subscriber2 = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, empty_callback)
 
 bridge_object = CvBridge()
 detectedStopSign = False
+switch = False
 
 x = 0
 z = 0
 
 if __name__ == '__main__':
     try:
-        # ensure robot is not moving at start
+        # ensure the robot is not moving at the start
         vel.linear.x = 0
         vel.linear.y = 0
         vel.linear.z = 0
@@ -251,7 +280,7 @@ if __name__ == '__main__':
         listener = keyboard.Listener(on_press=on_press, on_release=on_release)
         listener.start()
 
-        # code won't run unless this while loop is present so have it with a pass
+        # code won't run unless this while loop is present, so have it with a pass
         while not rospy.is_shutdown():
             pass
 
