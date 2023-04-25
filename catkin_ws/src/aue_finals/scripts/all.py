@@ -167,6 +167,8 @@ def wallFollow_Callback(data):
 
 
 def camera_callback(data):
+    global detectedStopSign
+    global oct
     # We select bgr8 because it's the OpneCV encoding by default
     cv_image = bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
 
@@ -204,6 +206,34 @@ def camera_callback(data):
     # cv2.imshow("MASK", mask)
     # cv2.waitKey(1)
 
+    ##-------------------STOP SIGN DETECTION-------------------------------
+    # cropping the image
+    height2, width2, channels2 = cv_image.shape
+    crop_img2 = cv_image[int((height2 / 2) - 300):int((height2 / 2))][1:int(width2)]
+
+    # converting to an HSV
+    stop_img = cv2.cvtColor(crop_img2, cv2.COLOR_BGR2HSV)
+
+    # filtering out the red-colored portion -- stop sign
+    lower_red = np.array([1, 0, 248])
+    upper_red = np.array([179, 255, 255])
+    red = cv2.inRange(stop_img, lower_red, upper_red)
+
+    contours2, hierarchy2 = cv2.findContours(red, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    cv2.drawContours(crop_img2, contours2, -1, (0, 255, 0), 3)
+
+    for contour in contours2:
+        area = cv2.contourArea(contour)
+        if area >= 12000:  # the area for the hexagon is roughly 5000 when it is first detected
+            perimeter = cv2.arcLength(contour, True)
+            e = 0.01 * perimeter  # The bigger the fraction, the more sides are chopped off the original polygon
+            simple_contour = cv2.approxPolyDP(contour, epsilon=e, closed=True)
+            num_sides = simple_contour.shape[0]
+            if num_sides == 8:
+                oct = 1
+            # print(num_sides)
+            # print(area)
+
     #################################
     ###   ENTER CONTROLLER HERE   ###
     #################################
@@ -215,6 +245,8 @@ def camera_callback(data):
         vel.linear.x = 0.1
         vel.angular.z = 0.0
 
+    if not detectedStopSign and oct == 1:
+        pass
     rospy.loginfo("ANGULAR VALUE SENT===>" + str(self.twist_object.angular.z))
     # Make it start turning
     # publisher.publish(vel)
@@ -223,20 +255,21 @@ def camera_callback(data):
 
 
 def yolo_callback(msg):
-    # global detectedStopSign
-    # if not detectedStopSign:
-    #     for i in msg.bounding_boxes:
-    #         if i.Class == "stop sign":
-    #             rospy.loginfo('Stop sign detected! Stop for 3 seconds.')
-    #             detectedStopSign = True
-    #             vel.angular.z = 0
-    #             vel.linear.x = 0
-    #             moveTurtlebot3_object.cmd_vel_subs.unregister()
-    #             rospy.sleep(3.)
-    #             vel.linear.x = 0
-    #             vel.angular.z = -0.5
-    #             moveTurtlebot3_object.cmd_vel_subs = rospy.Subscriber('/cmd_vel', Twist, self.moveTurtlebot3_object.cmdvel_callback)
-    pass
+    global detectedStopSign
+    global subscriber
+    if not detectedStopSign:
+        for i in msg.bounding_boxes:
+            if i.Class == "stop sign":
+                rospy.loginfo('Stop sign detected! Stop for 3 seconds.')
+                detectedStopSign = True
+                subscriber.unregister()
+                # vel.angular.z = 0
+                # vel.linear.x = 0
+                # publisher.publish(vel)
+                rospy.sleep(3.)
+                # vel.linear.x = 0
+                # vel.angular.z = -0.5
+                subscriber = rospy.Subscriber("/camera/rgb/image_raw", Image, camera_callback, queue_size=1)
 
 
 def tag_callback(data):
@@ -282,6 +315,7 @@ subscriber2 = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, emp
 
 bridge_object = CvBridge()
 detectedStopSign = False
+oct = 0
 switch = False
 
 x = 0
