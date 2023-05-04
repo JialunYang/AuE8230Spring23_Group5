@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from pynput import keyboard
-# from apriltag_ros.msg import AprilTagDetectionArray
+from apriltag_ros.msg import AprilTagDetectionArray
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import rospy
@@ -12,10 +12,10 @@ from sensor_msgs.msg import Image, CompressedImage
 from darknet_ros_msgs.msg import BoundingBoxes
 import math
 import numpy as np
-from move_robot import MoveTurtlebot3
+from PID import PID
 
 
-def PID(error, Kp=0.1):
+def PC(error, Kp=0.1):
     return Kp * error
 
 def on_press(key):
@@ -92,18 +92,60 @@ def on_release(key):
         publisher.publish(vel)
         rate.sleep()
 
-        # line_follower_object = LineFollower() #creates a cv bridge
         subscriber = rospy.Subscriber("/camera/image", Image, camera_callback, queue_size=1)
-        subscriber2 = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.yolo_callback)
+        subscriber2 = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, yolo_callback)
 
+    # State 3 = April Tag
+    elif key.char == "3":
+        state = 3
+        print("State " + str(state) + " activated")
 
-def empty_callback(msg):
+        subscriber.unregister()
+        subscriber2.unregister()
+        cv2.destroyAllWindows()
+
+        vel.linear.x = 0
+        vel.linear.y = 0
+        vel.linear.z = 0
+        vel.angular.x = 0
+        vel.angular.y = 0
+        vel.angular.z = 0
+
+        publisher.publish(vel)
+        rate.sleep()
+
+        subscriber = rospy.Subscriber('/tag_detections', AprilTagDetectionArray, tag_callback)
+        subscriber2 = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, empty_callback)
+
+    # State 4 = Stop
+    elif key.char == "4":
+        state = 4
+        print("Stop sign detecting, stop for 3s")
+
+        subscriber.unregister()
+        subscriber2.unregister()
+        cv2.destroyAllWindows()
+
+        vel.linear.x = 0
+        vel.linear.y = 0
+        vel.linear.z = 0
+        vel.angular.x = 0
+        vel.angular.y = 0
+        vel.angular.z = 0
+
+        publisher.publish(vel)
+        rate.sleep()
+
+        subscriber = rospy.Subscriber("/camera/image", Image, stop_callback, queue_size=1)
+        subscriber2 = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, empty_callback)
+
+def empty_callback(data):
     pass
 
 
 def wallFollow_Callback(data):
     global switch
-    print("entered wallFollow callback")
+    # print("entered wallFollow callback")
     if not switch:
         print('mode 1')
         lidar_scan = list(data.ranges[0:359])
@@ -118,8 +160,8 @@ def wallFollow_Callback(data):
         front_min = min(front_cone)
 
         error = left - right
-        vel.linear.x = 0.2
-        vel.angular.z = PID(error, 10)
+        vel.linear.x = 0.15
+        vel.angular.z = PC(error, 10)
         print("Angular Velocity is %s" % vel.angular.z)
         if front_min < 0.5:
             rospy.loginfo("Front obstacle detected" + str(front_min))
@@ -134,9 +176,12 @@ def wallFollow_Callback(data):
         print('mode 2')
         left = min(3.5, np.mean(data.ranges[270:340]))
         right = min(3.5, np.mean(data.ranges[20:90]))
-        error = -(left - right)
-        vel.linear.x = 0.2
-        vel.angular.z = PID(error, 1.3)
+        print(left, right)
+        error = (left - right)
+        pid_controller.update(error)
+        vel.linear.x = 0.1
+        # vel.angular.z = PC(error, 1.5)
+        vel.angular.z = pid_controller.output
         print("Angular Velocity is %s" % vel.angular.z)
         publisher.publish(vel)
         rate.sleep()
@@ -144,6 +189,9 @@ def wallFollow_Callback(data):
 
 
 def camera_callback(data):
+    global detectedStopSign
+    global oct
+    global num_sides
     # We select bgr8 because it's the OpneCV encoding by default
     cv_image = bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
 
@@ -160,8 +208,8 @@ def camera_callback(data):
     convert to HSV."""
 
     # Threshold the HSV image to get only yellow colors
-    lower_yellow = np.array([7, 19, 14])
-    upper_yellow = np.array([83, 86, 162])
+    lower_yellow = np.array([26, 31, 88])
+    upper_yellow = np.array([52, 255, 255])
     mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
 
     # Calculate centroid of the blob of binary image using ImageMoments
@@ -176,30 +224,71 @@ def camera_callback(data):
 
     # Draw the centroid in the resultut image
     # cv2.circle(img, center, radius, color[, thickness[, lineType[, shift]]])
-    cv2.circle(mask, (int(cx), int(cy)), 10, (0, 0, 255), -1)
-    cv2.imshow("Original", cv_image)
-    cv2.imshow("MASK", mask)
-    cv2.waitKey(1)
+    # cv2.circle(mask, (int(cx), int(cy)), 10, (0, 0, 255), -1)
+    # cv2.imshow("Original", cv_image)
+    # cv2.imshow("MASK", mask)
+    # cv2.waitKey(1)
+
+    ##-------------------STOP SIGN DETECTION-------------------------------
+    # cropping the image
+    height2, width2, channels2 = cv_image.shape
+    crop_img2 = cv_image[int((height2 / 2) - 300):int((height2 / 2))][1:int(width2)]
+
+    # converting to an HSV
+    stop_img = cv2.cvtColor(crop_img2, cv2.COLOR_BGR2HSV)
+
+    # filtering out the red-colored portion -- stop sign
+    lower_red = np.array([1, 0, 248])
+    upper_red = np.array([179, 255, 255])
+    red = cv2.inRange(stop_img, lower_red, upper_red)
+
+    contours2, hierarchy2 = cv2.findContours(red, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    cv2.drawContours(crop_img2, contours2, -1, (0, 255, 0), 3)
+
+    for contour in contours2:
+        area = cv2.contourArea(contour)
+        if area >= 100:  # the area for the hexagon is roughly 5000 when it is first detected
+            perimeter = cv2.arcLength(contour, True)
+            e = 0.01 * perimeter  # The bigger the fraction, the more sides are chopped off the original polygon
+            simple_contour = cv2.approxPolyDP(contour, epsilon=e, closed=True)
+            num_sides = simple_contour.shape[0]
+            if num_sides == 8:
+                oct = 1
+            # print(num_sides)
+            # print(area)
+            # print(oct)
+    
 
     #################################
     ###   ENTER CONTROLLER HERE   ###
     #################################
     if find_traj:
-        print('find line')
-        error = -((cx - width / 2) / (width / 2))
-        vel.linear.x = 0.1
-        vel.angular.z = -PID(error, 0.4)
+        # print('find line')
+        # error = -((cx - width / 2) / (width / 2))
+        error = -1 * (cx - width/2)
+        vel.linear.x = 0.04
+        vel.angular.z = PC(error, 0.00045)
     else:
         print('no line')
         vel.linear.x = 0
-        vel.angular.z = 0.2
+        vel.angular.z = 0.15
+        # vel.angular.z = -0.15
+        # vel.angular.z = 0
+    
+    if not detectedStopSign and oct == 1:
+        rospy.loginfo('Stop sign detected! Stop for 3 seconds.')
+        detectedStopSign = True
+        vel.linear.x = 0
+        vel.angular.x = 0
+        publisher.publish(vel)
+        rospy.sleep(3.)
+        return
 
     rospy.loginfo("ANGULAR VALUE SENT===>" + str(vel.angular.z))
     # Make it start turning
     publisher.publish(vel)
-    # moveTurtlebot3_object.move_robot(vel)
     rate.sleep()
-    return
+    # return
 
 
 def yolo_callback(msg):
@@ -218,8 +307,48 @@ def yolo_callback(msg):
     #             moveTurtlebot3_object.cmd_vel_subs = rospy.Subscriber('/cmd_vel', Twist, self.moveTurtlebot3_object.cmdvel_callback)
     pass
 
-def tag_callback(msg):
-    pass
+def tag_callback(data):
+    global x
+    global y
+    global z
+    tag = data.detections[0]
+    tag_id = tag.id[0]
+    x = tag.pose.pose.pose.position.x
+    z = tag.pose.pose.pose.position.z
+    y = tag.pose.pose.pose.position.y
+
+    # Print the tag information
+    rospy.loginfo('Detected tag %d at position (%.2f, %.2f, %.2f)' % (tag_id, x, y, z))
+    
+    vel = Twist()
+    kx = 0.2
+    kz = -2
+    while not rospy.is_shutdown():
+        # Control and publish the velocity
+        print(z)
+        if z >= 0.4:
+            vel.linear.x = z * kx
+            vel.angular.z = x * kz
+        elif z <= 0.3:
+            vel.linear.x = -z * kx
+            vel.angular.z = -x * kz
+        else:
+            vel.linear.x = 0
+            vel.angular.z = 0
+
+        publisher.publish(vel)
+        rate.sleep()
+        return
+
+def stop_callback(data):
+    global status
+    vel.linear.x = 0
+    vel.angular.z = 0
+    publisher.publish(vel)
+    rospy.sleep(3.)
+    status = 2
+
+
 
 rospy.init_node('turtlesim_controller', anonymous=True)
 
@@ -228,7 +357,6 @@ state = 0
 
 publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)  # all states will use this so put it here for all to use
 vel = Twist()  # initialize vel as a Twist message
-moveTurtlebot3_object = MoveTurtlebot3()
 rate = rospy.Rate(40)
 
 subscriber = rospy.Subscriber("/scan", LaserScan, empty_callback)
@@ -237,8 +365,15 @@ subscriber2 = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, emp
 bridge_object = CvBridge()
 detectedStopSign = False
 switch = False
+oct = 0
+num_sides = 0
+
+
+pid_controller = PID(P = 0.8, I = 0.000, D = 0.00007)
+pid_controller.clear()
 
 x = 0
+y = 0
 z = 0
 
 if __name__ == '__main__':
